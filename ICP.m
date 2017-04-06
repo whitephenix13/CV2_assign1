@@ -1,31 +1,47 @@
-function [ R,t ] = ICP( A1,A2,max_num_iter,tolerance,plot)
+function [ R,t ] = ICP( A1,A2,max_num_iter,tolerance,source_subsample_type,...
+    source_number_sample,target_subsample_type,target_number_sample,plot)
 %tolerance is in percentage
 %Initialization
 tic;
 R=zeros(3);
 t=zeros(1,3);
 rms_val  = 10000000;
-A1_transformed= A1;
-A3=zeros(size(A1));
+
+%subsample source and target
+A1_sub = subsample( A1, source_subsample_type, source_number_sample );
+A2_sub = subsample( A2, target_subsample_type, target_number_sample );
+
+A1_transformed= A1_sub;
+A3=zeros(size(A2_sub));
 if(plot)
     figure
-    plot3(A1(:,1),A1(:,2),A1(:,3),'color','blue');
+    plot3(A1_sub(:,1),A1_sub(:,2),A1_sub(:,3),'color','blue');
     hold on ;
-    plot3(A2(:,1),A2(:,2),A2(:,3),'color','red');
+    plot3(A2_sub(:,1),A2_sub(:,2),A2_sub(:,3),'color','red');
 end
 
 for i=1:max_num_iter
+    %apply the random subsample at each loop
+    if(i>1)
+        if(strcmp(source_subsample_type,'random'))
+            A1_sub = subsample( A1, source_subsample_type, source_number_sample );
+            A1_transformed = (R * A1_sub')' +t;
+        end
+        if(strcmp(target_subsample_type,'random'))
+            A2_sub = subsample( A2, target_subsample_type, target_number_sample );
+        end
+    end
     %For each point in A1, find the closest point in A2
-    [Dist,Ind]= min(square_dist(A1_transformed,A2),[],2);%array of size 1 * size(A1,1)that gives the min distances and their indexes
+    [Dist,Ind]= min(square_dist(A1_transformed,A2_sub),[],2);%array of size 1 * size(A1,1)that gives the min distances and their indexes
     %use only the closest point in A2 and disregard the others
-    A3= A2(Ind,:);
+    A3= A2_sub(Ind,:);
     %Refine R and t using Singular Value Decomposition: based on Least-Squares
     %Rigid Motion Using SVD paper
     %Compute the centroids
-    p = sum(A1) ./ size(A1,1);
+    p = sum(A1_sub) ./ size(A1_sub,1);
     q = sum(A3) ./ size(A3,1);
     %Compute the centered vectors
-    X = A1 - p;
+    X = A1_sub - p;
     Y = A3 - q;
     %Compute covariance matrix
     S = (X'*Y)/size(X,1);%S is a 3x3 matrix
@@ -38,7 +54,7 @@ for i=1:max_num_iter
     %retrieve translation
     t = (q' - R*p')';%get a 1x3 translation vector
     %check if the algorithm converged: RMS unchanged
-    A1_transformed = (R * A1')' +t;
+    A1_transformed = (R * A1_sub')' +t;
     new_rms = RMS(A1_transformed,A3);
     delta_val = abs(rms_val - new_rms);
     if(delta_val<(tolerance*rms_val))
@@ -55,9 +71,11 @@ if(i==max_num_iter)
 end
 if(plot)
     figure
-    plot3(A1_transformed(:,1),A1_transformed(:,2),A1_transformed(:,3),'color','blue');
+    %plot3(A1_transformed(:,1),A1_transformed(:,2),A1_transformed(:,3),'color','blue');
+    scatter3(A1_transformed(:,1),A1_transformed(:,2),A1_transformed(:,3),'blue')
     hold on ;
-    plot3(A3(:,1),A3(:,2),A3(:,3),'color','red');
+    %plot3(A3(:,1),A3(:,2),A3(:,3),'color','red');
+    scatter3(A3(:,1),A3(:,2),A3(:,3),'red');
 end
 end
 
