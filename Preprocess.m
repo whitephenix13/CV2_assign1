@@ -33,9 +33,9 @@ I = 0.21*res(:,:,1) + 0.72*res(:,:,2) + 0.07*res(:,:,3);
 C = corner(I);
 
 %Plots
-figure(1);
-subplot(1,2,1); imshow(res);
-subplot(1,2,2); imshow(res); hold on; plot(C(:,1), C(:,2), 'r*');
+% figure(1);
+% subplot(1,2,1); imshow(res);
+% subplot(1,2,2); imshow(res); hold on; plot(C(:,1), C(:,2), 'r*');
 
 end
 
