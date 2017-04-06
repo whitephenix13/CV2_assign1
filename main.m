@@ -1,7 +1,7 @@
 
 useTest = true;
-source_subsample_type = 'random';%'all', 'uniform', 'random', 'informative'
-target_subsample_type = 'uniform';%'all', 'uniform', 'random', 'informative'
+source_subsample_type = 'all';%'all', 'uniform', 'random', 'informative'
+target_subsample_type = 'random';%'all', 'uniform', 'random', 'informative'
 source_nb_sample = 1000;
 target_nb_sample = 1000;
 if(useTest)

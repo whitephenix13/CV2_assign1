@@ -15,9 +15,11 @@ A1_transformed= A1_sub;
 A3=zeros(size(A2_sub));
 if(plot)
     figure
-    plot3(A1_sub(:,1),A1_sub(:,2),A1_sub(:,3),'color','blue');
+    %plot3(A1_sub(:,1),A1_sub(:,2),A1_sub(:,3),'color','blue');
+    %plot3(A2_sub(:,1),A2_sub(:,2),A2_sub(:,3),'color','red');
+    scatter3(A1_sub(:,1),A1_sub(:,2),A1_sub(:,3),'blue');
     hold on ;
-    plot3(A2_sub(:,1),A2_sub(:,2),A2_sub(:,3),'color','red');
+    scatter3(A2_sub(:,1),A2_sub(:,2),A2_sub(:,3),'red');
 end
 
 for i=1:max_num_iter
