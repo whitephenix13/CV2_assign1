@@ -1,5 +1,7 @@
 function [ R,t ] = ICP( A1,A2,max_num_iter,tolerance,plot)
+%tolerance is in percentage
 %Initialization
+tic;
 R=zeros(3);
 t=zeros(1,3);
 rms_val  = 10000000;
@@ -39,15 +41,17 @@ for i=1:max_num_iter
     A1_transformed = (R * A1')' +t;
     new_rms = RMS(A1_transformed,A3);
     delta_val = abs(rms_val - new_rms);
-    if(delta_val<tolerance)
-        disp(strcat('Converged with rms of_',num2str(rms_val), '_after_',num2str(i),'_iterations'));
+    if(delta_val<(tolerance*rms_val))
+        elapsed_time=toc;
+        disp(strcat('Converged with rms of_',num2str(rms_val), '_after_',num2str(i),'_iterations in _',num2str(elapsed_time)));
         break;
     else
         rms_val = new_rms;
     end
 end
 if(i==max_num_iter)
-    warning(strcat('Fail converging after_', num2str(max_num_iter),'_iterations: rms=_',num2str(rms_val) ));
+    elapsed_time=toc;
+    warning(strcat('Fail converging after_', num2str(max_num_iter),'_iterations: rms=_',num2str(rms_val),'_ time :_', num2str(elapsed_time)));
 end
 if(plot)
     figure

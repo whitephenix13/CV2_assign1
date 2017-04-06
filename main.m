@@ -5,7 +5,7 @@ if(useTest)
     pointCloud1 = pointCloud1.source;
     pointCloud2 = (load('target.mat'));
     pointCloud2 = pointCloud2.target;
-    [R,t]= ICP(pointCloud1',pointCloud2',100,0.01,true);
+    [R,t]= ICP(pointCloud1',pointCloud2',100,0.1,true);
 else
     pointCloud1 = readPcd('data/0000000001.pcd');
     pointCloud2 = readPcd('data/0000000002.pcd');
