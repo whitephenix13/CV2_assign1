@@ -19,8 +19,11 @@ elseif(strcmp(mode,'random'))
     indexes=r;
     sub_point_cloud=point_cloud(indexes,:);
 elseif(strcmp(mode,'informative'))
-    %TODO: No idea what to do there... maybe your corner detection? 
+    %Remove background with mask, use corner detection
+    
 else
     warning(strcat('The mode_',mode,' does not exists for subsample'));
+    
+    
 end
 
