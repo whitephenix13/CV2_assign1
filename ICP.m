@@ -1,4 +1,4 @@
-function [ R,t ] = ICP( A1,A2,max_num_iter,tolerance,source_subsample_type,...
+function [ R,t,A1_transformed,A3 ] = ICP( A1,A2,max_num_iter,tolerance,source_subsample_type,...
     source_number_sample,target_subsample_type,target_number_sample,plot)
 %tolerance is in percentage
 %Initialization
@@ -15,8 +15,6 @@ A1_transformed= A1_sub;
 A3=zeros(size(A2_sub));
 if(plot)
     figure
-    %plot3(A1_sub(:,1),A1_sub(:,2),A1_sub(:,3),'color','blue');
-    %plot3(A2_sub(:,1),A2_sub(:,2),A2_sub(:,3),'color','red');
     scatter3(A1_sub(:,1),A1_sub(:,2),A1_sub(:,3),'blue');
     hold on ;
     scatter3(A2_sub(:,1),A2_sub(:,2),A2_sub(:,3),'red');
