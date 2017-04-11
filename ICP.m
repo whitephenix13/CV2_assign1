@@ -1,5 +1,5 @@
 function [ R,t,A1_transformed,A3 ] = ICP( A1,A2,max_num_iter,tolerance,source_subsample_type,...
-    source_number_sample,target_subsample_type,target_number_sample,plot)
+    source_number_sample,target_subsample_type,target_number_sample,plot,log)
 %tolerance is in percentage
 %Initialization
 tic;
@@ -32,7 +32,7 @@ for i=1:max_num_iter
         end
     end
     %For each point in A1, find the closest point in A2
-    [Dist,Ind]= min(square_dist(A1_transformed,A2_sub),[],2);%array of size 1 * size(A1,1)that gives the min distances and their indexes
+    Ind= min_square_dist(A1_transformed,A2_sub);%array of size 1 * size(A1,1)that gives the min distances and their indexes
     %use only the closest point in A2 and disregard the others
     A3= A2_sub(Ind,:);
     %Refine R and t using Singular Value Decomposition: based on Least-Squares
@@ -59,7 +59,9 @@ for i=1:max_num_iter
     delta_val = abs(rms_val - new_rms);
     if(delta_val<(tolerance*rms_val))
         elapsed_time=toc;
-        disp(strcat('Converged with rms of_',num2str(rms_val), '_after_',num2str(i),'_iterations in _',num2str(elapsed_time)));
+        if(log)
+            disp(strcat('Converged with rms of_',num2str(rms_val), '_after_',num2str(i),'_iterations in _',num2str(elapsed_time)));
+        end
         break;
     else
         rms_val = new_rms;
@@ -67,7 +69,9 @@ for i=1:max_num_iter
 end
 if(i==max_num_iter)
     elapsed_time=toc;
-    warning(strcat('Fail converging after_', num2str(max_num_iter),'_iterations: rms=_',num2str(rms_val),'_ time :_', num2str(elapsed_time)));
+    if(log)
+        warning(strcat('Fail converging after_', num2str(max_num_iter),'_iterations: rms=_',num2str(rms_val),'_ time :_', num2str(elapsed_time)));
+    end
 end
 if(plot)
     figure
@@ -83,13 +87,30 @@ end
 %efficient than pdist.
 %A1 is a matrix of size n x 3 (each line correspond to a point)
 %A2 is a matrix of size m x 3 (each line correspond to a point)
-function D = square_dist(A1, A2)
+%return the indexes such that A2(ind,:) are the closest points to A1
+function ind = min_square_dist(A1, A2)
 %Let's apply the following formula: ||a-b||^2 = ||a||^2 + ||b||^2 - 2
 %dot(a,b) for any vector a,b of same size.
 %We want to apply it to every line(ie: vector) of our matrix A1 and A2.
 %We want D to be a n * m matrix where D(i,j) is the distance between
 %A1(i,:) and A2(j,:)
-D = bsxfun(@plus,dot(A1',A1'),dot(A2',A2')')'-2*(A1*A2');
+ind= zeros(size(A2,1),1);
+%limit memory usage to 1 GB 
+MEMORY_LIMIT = 1000000000;%B
+num_elem = floor(MEMORY_LIMIT/(32*size(A2,1)));%number of element of A1 considered at a time
+for i=1:(ceil(size(A1,1)/num_elem))
+        %elements from ((i-1) * num_elem) +1 to i * num_elem 
+        elem_ind = ((i-1) * num_elem)+ 1;
+        last_elem_ind = elem_ind + num_elem -1;
+        if(last_elem_ind>size(A2,1))
+            last_elem_ind=size(A2,1);
+        end
+        D = bsxfun(@plus,dot(A1(elem_ind:last_elem_ind,:)',A1(elem_ind:last_elem_ind,:)'),dot(A2(elem_ind:last_elem_ind,:)'...
+            ,A2(elem_ind:last_elem_ind,:)')')'-2*(A1(elem_ind:last_elem_ind,:)*A2(elem_ind:last_elem_ind,:)');
+        [dist,index]=min(D,[],2);
+         clear D;
+        ind(elem_ind:last_elem_ind)=index;
+end
 end
 
 function val = RMS(A1_transf,A2)
