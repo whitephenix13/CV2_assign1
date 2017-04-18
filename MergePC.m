@@ -42,7 +42,7 @@ for k2 = (start_test+s):s:images % s - step, images - amount of images to procce
         end
         %filter by distance (mask)
         if(strcmp(source_subsample_type,'informative'))
-            method ='my' ; % my,falsecolor,blend,diff
+            method ='my' ; % my,experiment, falsecolor,blend,diff
             pointCloud1 = subsampleCorners( jpgFilename, maskFilename, depthFilename, method);
             pointCloud2 = subsampleCorners( jpgFilename2, maskFilename2, depthFilename2, method);
         else
