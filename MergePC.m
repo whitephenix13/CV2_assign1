@@ -71,8 +71,7 @@ for k2 = (start_test+s):s:images % s - step, images - amount of images to procce
                 [ R,t,Pc2_tranformed,finalPC_subsampled,converged]= ICP(pointCloud2,pointCloud1,max_num_iter,tolerance,...
                     source_subsample_type,source_nb_sample,...
                     target_subsample_type,target_nb_sample,false,true);
-                if(converged || ~converged)
-                    %% 
+                if(converged)
                     final_cloud_index=size(finalPC_subsampled,1);
                     final_point_cloud(1:final_cloud_index,:)=finalPC_subsampled;
                 end
@@ -81,7 +80,7 @@ for k2 = (start_test+s):s:images % s - step, images - amount of images to procce
                     max_num_iter,tolerance,source_subsample_type,source_nb_sample,...
                     'all',target_nb_sample,false,true);
             end
-            if(converged || ~converged)
+            if(converged)
                 %merge points
                 new_size = final_cloud_index + size(Pc2_tranformed,1)-1;
                 final_point_cloud(final_cloud_index:new_size,:)=Pc2_tranformed;
