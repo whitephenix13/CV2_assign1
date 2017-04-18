@@ -1,4 +1,4 @@
-function [ R,t,A1_transformed,A3,converged] = ICP( A1,A2,max_num_iter,tolerance,source_subsample_type,...
+function [ R,t,A1_transformed,A3,converged,rms_val,i,elapsed_time] = ICP( A1,A2,max_num_iter,tolerance,source_subsample_type,...
     source_number_sample,target_subsample_type,target_number_sample,plot,log, R_init, t_init)
 %NOTE: R_init and t_init are optionnal parameters !  
 %tolerance is in percentage
@@ -81,6 +81,7 @@ if(i==max_num_iter)
     if(log)
         warning(strcat('Fail converging after_', num2str(max_num_iter),'_iterations: rms=_',num2str(rms_val),'_ time :_', num2str(elapsed_time)));
     end
+    elapsed_time=100000;
 end
 if(plot)
     figure
