@@ -1,14 +1,11 @@
 backgroundThreshold = 2;
-source_subsample_type = 'random';%'all', 'uniform', 'random', 'informative'
+source_subsample_type = 'informative';%'all', 'uniform', 'random', 'informative'
 target_subsample_type = 'all';%'all', 'uniform', 'random', 'informative'
 %for informative, we create are own point cloud from the image, for
 %consistency reasons, both source and target points clouds need to be
 %generated from the same way 
-if( (strcmp(source_subsample_type,'informative')) || (strcmp(source_subsample_type,'informative')))
-    source_subsample_type='informative';
-    target_subsample_type='informative';
-end
-source_nb_sample = 10000;
+
+source_nb_sample = 1000;
 target_nb_sample = 1000;
 max_num_iter=50;
 tolerance=0.05; %in percentage ie 5%
@@ -45,9 +42,9 @@ for run=1:nb_test_loop
     accuracy=accuracy + f.rms;
     speed = speed + f.elapsed_time;
     %R stability
-    mean_R=mean_R+R;
+    mean_R=mean_R+f.R;
     %t stability
-    mean_t=mean_t+t;
+    mean_t=mean_t+f.t;
     %noise tolerance
     filename2 = strcat(num2str(run),'_',source_subsample_type,'_',num2str(source_nb_sample),'_' , num2str(noise_sigma));
     f2=load(strcat('ICP _results/',filename2,'.mat'));
@@ -70,7 +67,7 @@ end
 stability_R=stability_R/nb_test_loop;
 stability_t=stability_t/nb_test_loop;
 
-disp(strcat(source_subsample_type,'_',num2str(source_nb_sample),'_' , num2str(noise),':'));
+disp(strcat(source_subsample_type,'_',num2str(source_nb_sample),'_' , num2str(noise_sigma),':'));
 disp(strcat('accuracy:__',num2str(accuracy)));
 disp(strcat('speed:__',num2str(speed)));
 disp(strcat('stability R:__',num2str(stability_R)));

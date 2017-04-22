@@ -1,15 +1,15 @@
-function [ R,t,A1_transformed,A3,converged,rms_val,i,elapsed_time] = ICP( A1,A2,max_num_iter,tolerance,source_subsample_type,...
+function [ Ra,ta,A1_transformed,A3,converged,rms_val,i,elapsed_time] = ICP( A1,A2,max_num_iter,tolerance,source_subsample_type,...
     source_number_sample,target_subsample_type,target_number_sample,plot,log, R_init, t_init)
 %NOTE: R_init and t_init are optionnal parameters !  
 %tolerance is in percentage
 %Initialization
 tic;
 if(nargin < 11)
-    R=eye(3,3);
-    t=zeros(1,3);
+    Ra=eye(3,3);
+    ta=ones(3,1);
 else
-    R=R_init;
-    t=t_init;
+    Ra=R_init;
+    ta=t_init;
 end
 rms_val  = 10000000;
 
@@ -17,22 +17,21 @@ rms_val  = 10000000;
 A1_sub = subsample( A1, source_subsample_type, source_number_sample );
 A2_sub = subsample( A2, target_subsample_type, target_number_sample );
 
-A1_transformed= A1_sub;
+%figure;
+%scatter3(A1_sub(:,1),A1_sub(:,2),A1_sub(:,3),'blue','.');
+%hold on;
+%target
+%scatter3(A2_sub(:,1),A2_sub(:,2),A2_sub(:,3),'red','.');
+
+A1_transformed= (Ra * A1_sub'+ta)';
 A3=zeros(size(A2_sub));
-%plot origin
-%if(plot)
-    %figure
-    %scatter3(A1_sub(:,1),A1_sub(:,2),A1_sub(:,3),'blue');
-    %hold on ;
-    %scatter3(A2_sub(:,1),A2_sub(:,2),A2_sub(:,3),'red');
-%end
 
 for i=1:max_num_iter
     %apply the random subsample at each loop
     if(i>1)
         if(strcmp(source_subsample_type,'random'))
             A1_sub = subsample( A1, source_subsample_type, source_number_sample );
-            A1_transformed = (R * A1_sub')' +t;
+            A1_transformed = (Ra * A1_sub'+ta)';
         end
         if(strcmp(target_subsample_type,'random'))
             A2_sub = subsample( A2, target_subsample_type, target_number_sample );
@@ -45,25 +44,28 @@ for i=1:max_num_iter
     %Refine R and t using Singular Value Decomposition: based on Least-Squares
     %Rigid Motion Using SVD paper
     %Compute the centroids
-    p = sum(A1_sub) ./ size(A1_sub,1);
-    q = sum(A3) ./ size(A3,1);
+    p = sum(A1_transformed) ./ size(A1_transformed,1); %size 1x3
+    q = sum(A3) ./ size(A3,1); %size 1x3
     %Compute the centered vectors
-    X = A1_sub - p;
+    X = A1_transformed - p;
     Y = A3 - q;
     %Compute covariance matrix
-    S = (X'*Y)/size(X,1);%S is a 3x3 matrix
+    S = (X'*Y);%S is a 3x3 matrix
     %Compute the SVD decomposition
     [U,SIG,V]= svd(S);
     %Evaluate rotation
     diag_values= ones(1,size(X,2));
     diag_values(end) = det(V*U');
-    R= V * diag(diag_values) * U';
+    R= V * diag(diag_values) * U';%tranformation for regular point cloud representation
     %retrieve translation
-    t = (q' - R*p')';%get a 1x3 translation vector
+    t = q' - R*p';%get a 3x1 translation vector
     %check if the algorithm converged: RMS unchanged
-    A1_transformed = (R * A1_sub')' +t;
+    A1_transformed = (R * A1_transformed'+t)';
     new_rms = RMS(A1_transformed,A3);
     delta_val = abs(rms_val - new_rms);
+    Ra=R*Ra;
+    ta=R*ta+t;
+    
     if(delta_val<(tolerance*rms_val))
         elapsed_time=toc;
         converged=true;

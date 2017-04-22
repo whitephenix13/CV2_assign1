@@ -12,7 +12,10 @@ merging_type='local'; %local, global: local is for section 2.1, global is for se
 %to do some test, set the first part to 1 and 1 : this will apply ICP to
 %the first two frames
 noise_sigma = 0; 
-MergePC( 7, 1, max_num_iter,tolerance,source_subsample_type,...
-    source_nb_sample,target_subsample_type,target_nb_sample,backgroundThreshold,merging_type,noise_sigma);
 
-
+A1= load('source.mat');
+A1=A1.source';
+A2= load('target.mat');
+A2=A2.target';
+[ R,t,A1_transformed,A3,converged,rms_val,i,elapsed_time] = ICP( A1,A2,max_num_iter,tolerance,source_subsample_type,...
+    source_nb_sample,target_subsample_type,target_nb_sample,true,true);
