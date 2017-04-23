@@ -9,6 +9,8 @@ final_pc_size= min(floor(MEMORY_LIMIT*1000000/192),MEMORY_LIMIT*1000000/(64*targ
 %final_point_cloud= zeros(3,final_pc_size); % divide by 3 * 8(octet size) such that the array has a memory usage of MEMORY LIMIT
 final_point_cloud= zeros(final_pc_size,3); % divide by 3 * 8(octet size) such that the array has a memory usage of MEMORY LIMIT
 final_cloud_index= 1;
+scatterColor = zeros(final_pc_size,1);
+scatterColorIndex=1;
 skip_next = false;
 
 k=0;
@@ -57,9 +59,11 @@ while (k2<= images) % s - step, images - amount of images to proccess
             %[ Ra,ta,A1_transformed,new_PC_merged,converged,rms,nb_iter,elapsed_time]= ICP_test(pointCloud1',pointCloud2',max_num_iter,tolerance,source_subsample_type,source_nb_sample,...
             %target_subsample_type,target_nb_sample,false,false);
             if(converged)
-                if(k==0)          
+                if(k==0)
                     final_cloud_index=size(A1_transformed,1);
-                    final_point_cloud(1:final_cloud_index,:)=(A1_transformed-ta')/Ra'; %frame 0 coordinate system
+                    final_point_cloud(1:final_cloud_index,:)=subsample( pointCloud1, source_subsample_type, source_nb_sample ); %frame 0 coordinate system
+                    scatterColor(1:final_cloud_index)=ones(final_cloud_index,1)*scatterColorIndex;
+                    scatterColorIndex=scatterColorIndex + 1;
                     %change for ICP_test
                     %final_cloud_index=size(A1_transformed,2);
                     %final_point_cloud(:,1:final_cloud_index)=Ra\(A1_transformed-ta); %frame 0 coordinate system
@@ -67,11 +71,16 @@ while (k2<= images) % s - step, images - amount of images to proccess
                 %transform all previous points in same coordinate system
                 %convert from m-1 coordinate system to m (R and t match m-1
                 %to m)
-                
+                new_pc2=pointCloud2;
+                if(~strcmp(source_subsample_type,'informative'))
+                    new_pc2=subsample( pointCloud2, source_subsample_type, source_nb_sample );
+                end
                 %tranform frame 1...m-1 from CS n-1 to CS m
                 final_point_cloud(1:final_cloud_index,:)= final_point_cloud(1:final_cloud_index,:)*Ra'+ta';
-                new_size = final_cloud_index + size(new_PC_merged,1);
-                final_point_cloud(final_cloud_index+1:new_size,:)=new_PC_merged;%coordinate system m
+                new_size = final_cloud_index + size(new_pc2,1);
+                final_point_cloud(final_cloud_index+1:new_size,:)=new_pc2;%coordinate system m
+                scatterColor(final_cloud_index+1:new_size)=ones(size(new_pc2,1),1)*scatterColorIndex;
+                scatterColorIndex=scatterColorIndex + 1;
                 %change for ICP_test
                 %final_point_cloud(:,1:final_cloud_index)= Ra* final_point_cloud(:,1:final_cloud_index)+ta;
                 %new_size = final_cloud_index + size(new_PC_merged,2)-1;
@@ -85,28 +94,29 @@ while (k2<= images) % s - step, images - amount of images to proccess
         else %= global
             %Match the new point cloud (source) to the final point cloud
             %(target)
-            if(k2==s)
-                [ Ra,ta,new_PC_merged,finalPC_subsampled,converged,rms,nb_iter,elapsed_time]= ICP(pointCloud2,pointCloud1,max_num_iter,tolerance,...
-                    source_subsample_type,source_nb_sample,...
-                    target_subsample_type,target_nb_sample,false,true);
-                if(converged)
-                    final_cloud_index=size(finalPC_subsampled,1);
-                    final_point_cloud(1:final_cloud_index,:)=finalPC_subsampled;
-                end
-            else
-                [ Ra,ta,new_PC_merged,finalPC_subsampled,converged,rms,nb_iter,elapsed_time]= ICP(pointCloud2,final_point_cloud(1:final_cloud_index,:),...
-                    max_num_iter,tolerance,source_subsample_type,source_nb_sample,...
-                    'all',target_nb_sample,false,true);
+            if(k==0)
+                A1_sub= subsample( pointCloud1, source_subsample_type, source_nb_sample) ;
+                final_cloud_index=size(A1_sub,1);
+                final_point_cloud(1:final_cloud_index,:)=A1_sub;
+                scatterColor(1:final_cloud_index)=ones(final_cloud_index,1)*scatterColorIndex;
+                scatterColorIndex=scatterColorIndex + 1;
             end
+            [ Ra,ta,new_PC_merged,finalPC_subsampled,converged,rms,nb_iter,elapsed_time]= ICP(pointCloud2,final_point_cloud(1:final_cloud_index,:),...
+                max_num_iter,tolerance,source_subsample_type,source_nb_sample,...
+                'all',target_nb_sample,false,true);
             if(converged)
+                new_pc2 = subsample( pointCloud2, source_subsample_type, source_nb_sample );
                 %merge points
-                new_size = final_cloud_index + size(new_PC_merged,1);
-                final_point_cloud(final_cloud_index+1:new_size,:)=new_PC_merged;
+                final_point_cloud(1:final_cloud_index,:) = (final_point_cloud(1:final_cloud_index,:)-ta') /Ra';
+                
+                new_size = final_cloud_index + size(new_pc2,1);
+                final_point_cloud(final_cloud_index+1:new_size,:)=new_pc2;
+                scatterColor(final_cloud_index+1:new_size)=ones(size(new_pc2,1),1)*scatterColorIndex;
+                scatterColorIndex=scatterColorIndex + 1;
                 final_cloud_index=new_size;
                 %tranform the final point cloud into the new point cloud system
                 %coordinate: minimize the data shift : Y = (RX')' +t => Y =
                 %X = (Y-t) (R^-1)'
-                final_point_cloud(1:final_cloud_index,:) = (final_point_cloud(1:final_cloud_index,:) - ta') / Ra';
                 
             else
                 %the frame k2 is problematic, skip it
@@ -127,6 +137,7 @@ while (k2<= images) % s - step, images - amount of images to proccess
 end
 
 final_point_cloud((final_cloud_index+1):end,:)=[]; %remove all unused space
+scatterColor((final_cloud_index+1):end,:)=[];
 %change for ICP_test
 %final_point_cloud(:,(final_cloud_index+1):end)=[]; %remove all unused space
 
@@ -143,19 +154,9 @@ if(images == 1)
     %target
     scatter3(final_point_cloud(source_size+1:end,1),final_point_cloud(source_size+1:end,2),final_point_cloud(source_size+1:end,3),'red','.');
 else
-    max_val = round((images-s)/s)+2;
-    replicate= floor(size(final_point_cloud(:,1),1)/max_val);
-    delta = replicate*max_val-size(final_point_cloud(:,1),1);
-    
-    C= repelem(linspace(1,max_val,max_val),replicate)';
-    if(delta<0)
-        C=[C;ones(-delta,1)*max_val];
-    else
-        C(end-delta+1:end)=[];
-    end
     colormap jet;
     cmap = colormap;
-    fscatter3(final_point_cloud(:,1),final_point_cloud(:,2),final_point_cloud(:,3),C(:,1),cmap);
+    fscatter3(final_point_cloud(:,1),final_point_cloud(:,2),final_point_cloud(:,3),scatterColor,cmap);
     %change for ICP_test
     %C=round(linspace(1,round((images-s)/s)+2,size(final_point_cloud(1,:),2)));
     %colormap jet;

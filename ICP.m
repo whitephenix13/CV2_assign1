@@ -8,6 +8,7 @@ if(nargin < 11)
     Ra=eye(3,3);
     ta=ones(3,1);
 else
+    disp('special init')
     Ra=R_init;
     ta=t_init;
 end
@@ -54,7 +55,7 @@ for i=1:max_num_iter
     %Compute the SVD decomposition
     [U,SIG,V]= svd(S);
     %Evaluate rotation
-    diag_values= ones(1,size(X,2));
+    diag_values= ones(1,3);
     diag_values(end) = det(V*U');
     R= V * diag(diag_values) * U';%tranformation for regular point cloud representation
     %retrieve translation

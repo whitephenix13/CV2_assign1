@@ -1,4 +1,4 @@
-function [ sub_point_cloud, indexes ] = subsample( point_cloud, mode,number_sample,img,mask,depth )
+function [ sub_point_cloud ] = subsample( point_cloud, mode,number_sample,img,mask,depth )
 %point cloud has to be of size nx3
 %mode = 'all', 'uniform', 'random', 'informative'
 n =size(point_cloud,1);
