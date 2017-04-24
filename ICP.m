@@ -47,7 +47,6 @@ A3=zeros(size(A1_sub));%closest point from target point cloud (A2_sub) to A1_tra
 
 %ICP main iteration loop 
 for i=1:max_num_iter
-    i
     %apply the random subsample at each loop
     if(i>1)
         if(strcmp(source_subsample_type,'random'))

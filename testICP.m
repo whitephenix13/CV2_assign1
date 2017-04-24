@@ -1,13 +1,13 @@
 %Script to test ICP and the example containing source and target files
 
 backgroundThreshold = 2;
-source_subsample_type = 'informative';%'all', 'uniform', 'random', 'informative'
-target_subsample_type = 'informative';%'all', 'uniform', 'random', 'informative'
+source_subsample_type = 'random';%'all', 'uniform', 'random', 'informative'
+target_subsample_type = 'random';%'all', 'uniform', 'random', 'informative'
 %for informative, we create are own point cloud from the image, for
 %consistency reasons, both source and target points clouds need to be
 %generated from the same way
-source_nb_sample = 1000;
-target_nb_sample = 1000;
+source_nb_sample = 10000;
+target_nb_sample = 10000;
 max_num_iter=20;
 tolerance=0.1; %in percentage ie 5%
 merging_type='local'; %local, global: local is for section 2.1, global is for section 2.2
@@ -19,8 +19,8 @@ noise_sigma = 0;
 %A1=A1.source';
 %A2= load('target.mat');
 %A2=A2.target';
-A1_num = '05';
-A2_num = '07';
+A1_num = '00';
+A2_num = '18';
 if(strcmp(source_subsample_type,'informative'))
     method ='my' ; % my,experiment, falsecolor,blend,diff
     pcdFilename = strcat('data/00000000',A1_num,'.pcd');

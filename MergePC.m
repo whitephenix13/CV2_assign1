@@ -44,7 +44,8 @@ k2=s;
 %aggregated rotation and translation
 Ra = eye(3,3);
 ta=zeros(3,1);
-
+last_R= eye(3,3);
+last_t= zeros(3,1);
 %loop over all the frames
 while (k2<= images) % at each step: k=k2 and k2 = k2+s if no skip;;; k2=k2+s if skip
     %print the current frame being merged
@@ -86,7 +87,7 @@ while (k2<= images) % at each step: k=k2 and k2 = k2+s if no skip;;; k2=k2+s if 
         end
         
         %Method from 2.1 for merging: merge consecutive frame
-        merge_frame0 = true;%boolean that indicates if the final coordinate system has to be the one of the first frame or last frame
+        merge_frame0 = false;%boolean that indicates if the final coordinate system has to be the one of the first frame or last frame
         if(strcmp(merging_type,'local'))
             %initialize the final result by putting in the first point
             %cloud (frame 0)
@@ -102,11 +103,13 @@ while (k2<= images) % at each step: k=k2 and k2 = k2+s if no skip;;; k2=k2+s if 
                 end
                 [ R,t,A1_transformed,new_PC_merged,converged,rms,nb_iter,elapsed_time]= ICP(pointCloud1,pointCloud2,...
                     max_num_iter,tolerance,source_subsample_type,source_nb_sample,...
-                    target_subsample_type,target_nb_sample,false,true);
+                    target_subsample_type,target_nb_sample,false,true,last_R,last_t);
                 %R and t are such that they transform from coordinate system
                 %n-1 (the one from point cloud 1) to coordinate system n(the
                 %one from point cloud 2)
                 if(converged)
+                    last_R=R;
+                    last_t=t;
                     %transform the new point cloud to the coordinate system
                     %of frame 0. For that use the newly computed R and t as
                     %well as the aggregated ones Ra and ta 
@@ -140,11 +143,13 @@ while (k2<= images) % at each step: k=k2 and k2 = k2+s if no skip;;; k2=k2+s if 
                 end
                 [ R,t,A1_transformed,new_PC_merged,converged,rms,nb_iter,elapsed_time]= ICP(pointCloud1,pointCloud2,...
                     max_num_iter,tolerance,source_subsample_type,source_nb_sample,...
-                    target_subsample_type,target_nb_sample,false,true);
+                    target_subsample_type,target_nb_sample,false,true,last_R,last_t);
                 %R and t are such that they transform from coordinate system
                 %n-1 (the one from point cloud 1) to coordinate system n(the
                 %one from point cloud 2)
                 if(converged)
+                    last_R=R;
+                    last_t=t;
                     %transform all previous points in same coordinate system
                     %convert from n-1 coordinate system to n (R and t match n-1
                     %to n)
@@ -195,11 +200,13 @@ while (k2<= images) % at each step: k=k2 and k2 = k2+s if no skip;;; k2=k2+s if 
             end
             [ R,t,new_PC_merged,finalPC_subsampled,converged,rms,nb_iter,elapsed_time]= ICP(pointCloud2,final_point_cloud(1:final_cloud_index,:),...
                 max_num_iter,tolerance,source_subsample_type,source_nb_sample,...
-                'all',target_nb_sample,false,true);
+                'all',target_nb_sample,false,true,last_R,last_t);
             %R and t are such that they tranform the target point
             %cloud(point cloud 2) in coordinate system n  into the final
             %point cloud in coordinate system n-1
             if(converged)
+                last_R=R;
+                last_t=t;
                 %the new point cloud to add is the one from point cloud 2
                 %is coordiante system n
                 new_pc2 = subsample( pointCloud2, source_subsample_type, source_nb_sample );
