@@ -1,10 +1,15 @@
+%Subsample the point cloud with respect to different method:
+%'all' : take all the points 
+%'random': takes random points up to number_sample
+%'uniform': uniformly takes number_sample points
+%'informative': do nothing, this subsampling is used in MergePC as
+%preprocessing. 
 function [ sub_point_cloud ] = subsample( point_cloud, mode,number_sample,img,mask,depth )
 %point cloud has to be of size nx3
 %mode = 'all', 'uniform', 'random', 'informative'
 n =size(point_cloud,1);
 if(strcmp(mode,'all'))
     sub_point_cloud=point_cloud;
-    indexes= linspace(1,n,n);
 elseif(strcmp(mode,'uniform'))
     %make sure we don't extract more points that we have
     number_sample=min(number_sample,n);

@@ -9,39 +9,7 @@ depth = imread(depthname);
 mask(mask==255)=1;
 
 %Remove the background
-%Use 'my'
-if strcmp(method, 'my')
-    K1 = img(:,:,1).*mask.*depth;
-    K2 = img(:,:,2).*mask.*depth;
-    K3 = img(:,:,3).*mask.*depth;
-    
-    M1 = img(:,:,1).*mask;
-    M2 = img(:,:,2).*mask;
-    M3 = img(:,:,2).*mask;
-    
-    filter_image = cat(3,M1,M2,M3);
-    
-    res = cat(3,K1,K2,K3);
-    
-    I1 = 0.21*filter_image(:,:,1) + 0.72*filter_image(:,:,2) + 0.07*filter_image(:,:,3);
-    I2 = 0.21*res(:,:,1) + 0.72*res(:,:,2) + 0.07*res(:,:,3);
-    
-    C = corner(I2, 'N', 1000, 'method', 'MinimumEigenvalue', 'QualityLevel', 0.001);
-    F = corner(I1, 'N', 1000, 'method', 'MinimumEigenvalue', 'QualityLevel', 0.0001);
-    
-    M = [];
-    
-    for i=1:length(C(:,1))
-        if sum(C(i,:)==F(:,:))>0
-            continue
-        else
-            M = [M; C(i,:)];
-        end
-    end
-    
-    %figure(1);
-    %imshow(res); hold on; plot(M(:,1), M(:,2), 'r*');
-elseif strcmp(method, 'experiment')
+if strcmp(method, 'experiment')
     
     K1 = img(:,:,1).*mask.*depth;
     K2 = img(:,:,2).*mask.*depth;
@@ -66,7 +34,7 @@ elseif strcmp(method, 'experiment')
     %figure(1);
     %imshow(finalImg); hold on; plot(M(:,1), M(:,2), 'r*');
     
-elseif strcmp(method, 'new')
+elseif strcmp(method, 'my')
     
     K1 = img(:,:,1).*mask.*depth;
     K2 = img(:,:,2).*mask.*depth;

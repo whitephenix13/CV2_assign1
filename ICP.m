@@ -1,33 +1,53 @@
+%This function computes the ICP of two point clouds with respect to some
+%parameter and returns the rotation, the translation and some more
+%paramters:
+
+%input: A1: source point cloud in the format of nx3 where n is the number
+        %of points
+       %A2: target point cloud in the same format as A2 
+       %max_num_iter: maximum number of iteration before the ICP stops
+       %tolerance: stop condition if the rms converged
+       %source_subsample_type: 'all', 'uniform', 'random', 'informative'
+       %source_number_sample: desired number of sample when source is
+            %subsampled
+       %target_subsample_type: same as source but for target
+       %target_number_sample: same as source but for target
+       %plot: set to true to plot the final ICP result
+       %log: set to true to have information on the convergence of ICP
+       %t_init: optional, give an t vector as initialisation for ICP
+       
+%output: Ra,ta: rotation and translation such that A1 * Ra' +ta' = A2 
+        %A1_transformed: subsampled point cloud of A1 where we applied Ra
+        %and ta.
+        %A3 cooresponding points to A1 transformed such that the rms of
+        %A1_tranformed and A3 is small
+        %converged: boolean indicating the convergence of the algorithm
+        %total_rms_val: final rms value 
+        %i: number of iteration to convergence(or end of algorithm)
+        %elapsed_time: elapsed time to convergence (or end of algorithm)
 function [ Ra,ta,A1_transformed,A3,converged,rms_val,i,elapsed_time] = ICP( A1,A2,max_num_iter,tolerance,source_subsample_type,...
     source_number_sample,target_subsample_type,target_number_sample,plot,log, R_init, t_init)
-%NOTE: R_init and t_init are optionnal parameters !  
-%tolerance is in percentage
-%Initialization
 tic;
+%Initialization of the rotation and translation.
 if(nargin < 11)
     Ra=eye(3,3);
-    ta=ones(3,1);
+    ta=zeros(3,1);
 else
-    disp('special init')
     Ra=R_init;
     ta=t_init;
 end
-rms_val  = 10000000;
-
+rms_val= 1000000; %rms of each iteration 
 %subsample source and target
 A1_sub = subsample( A1, source_subsample_type, source_number_sample );
 A2_sub = subsample( A2, target_subsample_type, target_number_sample );
 
-%figure;
-%scatter3(A1_sub(:,1),A1_sub(:,2),A1_sub(:,3),'blue','.');
-%hold on;
-%target
-%scatter3(A2_sub(:,1),A2_sub(:,2),A2_sub(:,3),'red','.');
+A1_transformed= A1_sub *Ra'+ta';%point cloud to match with the target. At each iteration
+%this point cloud gets closer to the target.
+A3=zeros(size(A1_sub));%closest point from target point cloud (A2_sub) to A1_transformed
 
-A1_transformed= (Ra * A1_sub'+ta)';
-A3=zeros(size(A2_sub));
-
+%ICP main iteration loop 
 for i=1:max_num_iter
+    i
     %apply the random subsample at each loop
     if(i>1)
         if(strcmp(source_subsample_type,'random'))
@@ -64,10 +84,11 @@ for i=1:max_num_iter
     A1_transformed = (R * A1_transformed'+t)';
     new_rms = RMS(A1_transformed,A3);
     delta_val = abs(rms_val - new_rms);
+    %aggregate the rotation and the translation
     Ra=R*Ra;
     ta=R*ta+t;
-    
-    if(delta_val<(tolerance*rms_val))
+    %stop condition 
+    if(delta_val<=(tolerance*rms_val) || (rms_val < power(10,-15)))
         elapsed_time=toc;
         converged=true;
         if(log)
@@ -75,7 +96,7 @@ for i=1:max_num_iter
         end
         break;
     else
-        rms_val = new_rms;
+        rms_val=new_rms;
     end
 end
 if(i==max_num_iter)
@@ -88,15 +109,9 @@ if(i==max_num_iter)
 end
 if(plot)
     figure
-    C1=round(linspace(1,2,size(A1_transformed(:,1),1)))';
-    C2=round(linspace(2,3,size(A3(:,1),1)))';
-    colormap jet;
-    cmap = colormap;
-    fscatter3(A1_transformed(:,1),A1_transformed(:,2),A1_transformed(:,3),C1(:,1),cmap);
-    %scatter3(A1_transformed(:,1),A1_transformed(:,2),A1_transformed(:,3),'blue')
+    scatter3(A1_transformed(:,1),A1_transformed(:,2),A1_transformed(:,3),'blue','.');
     hold on ;
-    %scatter3(A3(:,1),A3(:,2),A3(:,3),'red');
-    fscatter3(A3(:,1),A3(:,2),A3(:,3),C2(:,1),cmap);
+    scatter3(A3(:,1),A3(:,2),A3(:,3),'red','.');
 
 end
 end

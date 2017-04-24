@@ -1,3 +1,5 @@
+%This function is used to add noise to the data to test the stability of
+%ICP. 
 function [ noised_point_cloud ] = add_noise( point_cloud, sigma)
 %add noise to the point cloud to test the stability 
 noised_point_cloud(:,1)= point_cloud(:,1) + sigma * randn(size(point_cloud,1),1);
